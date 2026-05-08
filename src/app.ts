@@ -43,29 +43,34 @@ export function mountApp(root: HTMLElement): void {
     render();
   }
 
-  async function handleFile(file: File) {
-    // 1. Show preview of the original GLB immediately
+  function handleFile(file: File) {
+    // Show preview of the original GLB immediately, then wait for the user
+    // to click "Pack & Download". The preview-ready state is the resting
+    // place between drop and pack.
     state = { kind: "loading-preview", file };
     preview.setSrc(file);
     drop.setEnabled(false);
     render();
 
-    // 2. Transition to packing
+    state = { kind: "preview-ready", file };
+    render();
+  }
+
+  async function handlePack(file: File) {
     state = { kind: "packing", file };
-    drop.setMessage("Packing… please wait");
     render();
 
     try {
       const { result, stats: s } = await runAndPack(file);
       const zipName = `${file.name.replace(/\.glb$/i, "")}.zip`;
 
-      // 3. Swap preview to packed GLB
+      // Swap preview to packed GLB
       const packedGlbBlob = new Blob([result.glbBytes as unknown as BlobPart], {
         type: "model/gltf-binary",
       });
       preview.setSrc(packedGlbBlob);
 
-      // 4. Trigger zip download
+      // Trigger zip download
       if (result.zipBytes) {
         const zipBlob = new Blob([result.zipBytes as unknown as BlobPart], {
           type: "application/zip",
@@ -79,7 +84,6 @@ export function mountApp(root: HTMLElement): void {
       const message = err instanceof ValidationError
         ? err.message
         : (err as Error).message ?? String(err);
-      // Log full stack for non-validation errors
       if (!(err instanceof ValidationError)) {
         console.error(err);
       }
@@ -112,6 +116,35 @@ export function mountApp(root: HTMLElement): void {
             <p class="status__line">Status: ${state.kind === "loading-preview" ? "loading…" : "packing…"}</p>
           </div>
         `;
+        grid.appendChild(aside);
+        main.appendChild(grid);
+        break;
+      }
+      case "preview-ready": {
+        const grid = document.createElement("div");
+        grid.className = "app__grid";
+        grid.appendChild(preview.element);
+        const aside = document.createElement("aside");
+        aside.className = "app__aside";
+        const fileLine = document.createElement("p");
+        fileLine.textContent = `📁 ${state.file.name}`;
+        aside.appendChild(fileLine);
+
+        const packBtn = document.createElement("button");
+        packBtn.className = "app__pack";
+        packBtn.type = "button";
+        packBtn.textContent = "Pack & Download";
+        const fileForClosure = state.file;
+        packBtn.addEventListener("click", () => handlePack(fileForClosure));
+        aside.appendChild(packBtn);
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "app__reset";
+        cancelBtn.type = "button";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", reset);
+        aside.appendChild(cancelBtn);
+
         grid.appendChild(aside);
         main.appendChild(grid);
         break;

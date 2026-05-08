@@ -121,3 +121,21 @@ html, body {
   background: #f0f7ff;
   border-color: #4a90e2;
 }
+
+/* Primary action — Pack & Download */
+.app__pack {
+  margin-top: 1rem;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid #4a90e2;
+  background: #4a90e2;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+}
+.app__pack:hover {
+  background: #357ab8;
+  border-color: #357ab8;
+}

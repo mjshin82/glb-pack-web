@@ -17,6 +17,7 @@ export interface Stats {
 export type AppState =
   | { kind: "idle" }
   | { kind: "loading-preview"; file: File }
+  | { kind: "preview-ready"; file: File }
   | { kind: "packing"; file: File }
   | { kind: "done"; file: File; result: PackResult; stats: Stats; zipName: string }
   | { kind: "error"; message: string };
